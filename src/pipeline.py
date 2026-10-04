@@ -2,7 +2,10 @@ from __future__ import annotations
 
 """Production RAG Pipeline — Ghép toàn bộ M1+M2+M3+M4+M5."""
 
-import os, sys, time
+import os
+import sys
+import time
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 if hasattr(sys.stderr, "reconfigure"):
@@ -10,12 +13,12 @@ if hasattr(sys.stderr, "reconfigure"):
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.m1_chunking import load_documents, chunk_hierarchical
+from config import RERANK_TOP_K
+from src.m1_chunking import chunk_hierarchical, load_documents
 from src.m2_search import HybridSearch
 from src.m3_rerank import CrossEncoderReranker
-from src.m4_eval import load_test_set, evaluate_ragas, failure_analysis, save_report
+from src.m4_eval import evaluate_ragas, failure_analysis, load_test_set, save_report
 from src.m5_enrichment import enrich_chunks
-from config import RERANK_TOP_K
 
 
 def build_pipeline():
@@ -30,7 +33,7 @@ def build_pipeline():
     docs = load_documents()
     all_chunks = []
     for doc in docs:
-        parents, children = chunk_hierarchical(doc["text"], metadata=doc["metadata"])
+        _parents, children = chunk_hierarchical(doc["text"], metadata=doc["metadata"])
         for child in children:
             all_chunks.append({"text": child.text, "metadata": {**child.metadata, "parent_id": child.parent_id}})
     print(f"  ✓ {len(all_chunks)} chunks from {len(docs)} documents ({time.time()-t0:.1f}s)", flush=True)
